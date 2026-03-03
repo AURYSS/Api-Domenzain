@@ -1,5 +1,5 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { User } from '../../user/entities/user.entity';
+import type { User } from '../../user/entities/user.entity.js';
 
 @Entity('task')
 export class Task {
@@ -18,7 +18,11 @@ export class Task {
   @Column({ name: 'user_id' })
   userId: number;
 
-  @ManyToOne(() => User, user => user.tasks)
+  @ManyToOne(() => (globalThis as any).User as typeof User, user => user.tasks)
   @JoinColumn({ name: 'user_id' })
   user: User;
+
 }
+
+// expose for circular relation resolution at runtime
+(globalThis as any).Task = Task;

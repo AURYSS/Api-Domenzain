@@ -1,7 +1,7 @@
 
 import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, ParseIntPipe, Post, Put } from "@nestjs/common";
-import { TaskService } from "./task.service"; 
-import { CreateTaskDto } from "../dto/create-task.dto";
+import { TaskService } from "./task.service.js"; 
+import { CreateTaskDto } from "../dto/create-task.dto.js";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 
 @ApiTags('Tasks')

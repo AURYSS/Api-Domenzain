@@ -1,13 +1,13 @@
 CREATE TABLE IF NOT EXISTS users(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    lastname TEXT
+    id SERIAL PRIMARY KEY,
+    name VARCHAR NOT NULL,
+    lastname VARCHAR
 );
 
 CREATE TABLE IF NOT EXISTS task(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    description TEXT NOT NULL,
+    id SERIAL PRIMARY KEY,
+    name VARCHAR NOT NULL,
+    description VARCHAR NOT NULL,
     priority INTEGER,
     user_id INTEGER NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id)

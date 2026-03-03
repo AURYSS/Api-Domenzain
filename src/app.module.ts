@@ -1,10 +1,11 @@
 import { Module, Controller, Get } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AuthModule } from './modules/auth/interfaces/auth.module';
-import { TaskModule } from './modules/task/interfaces/task.module';
-import { User } from './modules/user/entities/user.entity';
-import { Task } from './modules/task/entities/task.entity';
+import { AuthModule } from './modules/auth/interfaces/auth.module.js';
+import { TaskModule } from './modules/task/interfaces/task.module.js';
+import { User } from './modules/user/entities/user.entity.js';
+import { Task } from './modules/task/entities/task.entity.js';
+import { PrismaService } from './prisma.service.js';
 
 @Controller()
 class AppController {
@@ -29,5 +30,6 @@ class AppController {
     TaskModule,
   ],
   controllers: [AppController],
+  providers: [PrismaService],
 })
 export class AppModule {}
