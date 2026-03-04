@@ -6,7 +6,7 @@
     "esModuleInterop": true,
     "allowJs": true,
     "isolatedModules": true,
-    "declaration": true,
+    "declaration": false,   // 👈 CAMBIAR ESTO
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
@@ -22,5 +22,10 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/generated/prisma"  // 👈 AGREGAR ESTO
+  ]
 }
