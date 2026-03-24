@@ -2,10 +2,6 @@ import { IsBoolean, IsNotEmpty, IsNumber, IsString, MaxLength, MinLength } from 
 
 export class CreateTaskDto {
 
-    @IsString()
-    @IsNotEmpty()
-    @MinLength(3)
-    @MaxLength(100)
     name: string;  
 
     @IsString()
@@ -17,7 +13,5 @@ export class CreateTaskDto {
     @IsBoolean()
     priority: boolean;
 
-    @IsNumber()
-    @IsNotEmpty()
     userId: number;
 }

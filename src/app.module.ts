@@ -5,7 +5,8 @@ import { AuthModule } from './modules/auth/interfaces/auth.module.js';
 import { TaskModule } from './modules/task/interfaces/task.module.js';
 import { User } from './modules/user/entities/user.entity.js';
 import { Task } from './modules/task/entities/task.entity.js';
-import { PrismaService } from './prisma.service.js';
+import { PrismaService } from './common/services/prisma.service.js';
+import { PostModule } from './modules/post/post.module.js'; 
 
 @Controller()
 class AppController {
@@ -28,6 +29,7 @@ class AppController {
     }),
     AuthModule,
     TaskModule,
+    PostModule,
   ],
   controllers: [AppController],
   providers: [PrismaService],
