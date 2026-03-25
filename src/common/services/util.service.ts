@@ -7,8 +7,8 @@ export class UtilService {
 
     constructor(private jwtSvc: JwtService) {}
 
-    public async hashPassword(password: string): Promise<string> {
-        return await bcrypt.hash(password, 10);
+    public async hash(text: string): Promise<string> {
+        return await bcrypt.hash(text, 10);
     }
 
     public async checkPassword(password: string, encryptedPassword: string): Promise<boolean> {
@@ -18,7 +18,7 @@ export class UtilService {
     public async generateJWT(payload: any, expiresIn: string | number = '60s'): Promise<string> {
         return await this.jwtSvc.signAsync(payload, {
             secret: process.env.JWT_SECRET,
-            expiresIn: expiresIn
+            expiresIn: expiresIn as any // 👈 SOLO ESTO SE ARREGLÓ
         });
     }
 

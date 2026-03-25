@@ -1,9 +1,12 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, UnauthorizedException, UseGuards, Req } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, UnauthorizedException, UseGuards, Req, Param } from "@nestjs/common";
 import { AuthService } from "./auth.service.js";
 import { ApiOperation } from "@nestjs/swagger";
 import { AuthDto } from "../dto/auth.dto.js";
 import { JwtService } from "@nestjs/jwt";
 import { UtilService } from "src/common/services/util.service.js";
+import { AppException } from "src/common/exceptions/app.exception.js";
+import { request } from "node:http";
+import { AuthGuard } from "src/common/guards/auth.guard.js";
 
 
 @Controller("auth")
@@ -14,31 +17,39 @@ export class AuthController {
     private readonly utilSvc: UtilService
   ) {}
 
-  @Post("login")
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Verifica las credenciales y genera un JWT" })
+@Post("login")
+@HttpCode(HttpStatus.OK)
+@ApiOperation({ summary: "Verifica las credenciales y genera un JWT" })
+public async login(@Body() auth: AuthDto): Promise<any> {
 
-  public async login(@Body() auth: AuthDto): Promise<string> {
-    const { username, password } = auth;
+  const user = await this.authSvc.getUserByUsername(auth.username);
 
-    const user = await this.authSvc.getUserByUsername(username);
+  if (user && user.password === auth.password) {
 
-    if (!user) {
-      throw new UnauthorizedException("El usuario y/o contraseña es incorrecto");
-    }
+    const payload = {
+      id: user.id,
+      username: user.username,
+    };
 
-    const isValid = await this.utilSvc.checkPassword(password, user.password!);
 
-    if (!isValid) {
-      throw new UnauthorizedException("El usuario y/o contraseña es incorrecto");
-    }
+    //Generar refresh token por 7d 
+    const refresh = await this.utilSvc.generateJWT(payload, '7d');
+    const hashRT = await this.utilSvc.hash(refresh);
 
-    const { password: userPassword, ...payload } = user;
+    await this.authSvc.updateHash(payload.id, hashRT)
 
-    const jwt = await this.utilSvc.generateJWT(payload, "60s");
+    //Generar token de acceso por 1h
+    const jwt = await this.utilSvc.generateJWT(payload,'1h');
 
-    return jwt;
+    return {
+      access_token: jwt,
+      refresh_token: refresh,
+    };
+
+  } else {
+    throw new UnauthorizedException('El usuario y/o contrasena es incorrecta');
   }
+}
 
   @Get("me")
   @UseGuards()
@@ -48,15 +59,36 @@ export class AuthController {
     return user;
   }
 
-  @Post("refresh")
+  @Post("refresh/:refresh-token")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Genera un nuevo JWT usando el mismo payload del token actual" })
-  public async refreshToken() {
+  public async refreshToken(@Req() request: any) {
+
+    //Obtener el usuario en sesion 
+    const userSession = request['user'];
+    const user = await this.authSvc.getUserById(userSession.id);
+
+    if (!user || user.hash) throw new AppException('Acceso denegado', HttpStatus.FORBIDDEN, '0');
+
+    console.log(userSession.hash);
+    console.log(user.hash)
+    // TODO: Comprarar el token recibido con el token guardado
+    if (userSession.hash != user.hash) throw new AppException('Acceso denegado', HttpStatus.FORBIDDEN, '0')
+
+    // TODO: Si el token es valido se generan nuevos tokens
+    return{
+      token: '',
+      refreshToken: ''
+    }
   }
 
   @Post("logout")
-  @HttpCode(HttpStatus.OK)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(AuthGuard)
   @ApiOperation({ summary: "Invalida el token actual (simulado)" })
-  public async logout() {
+  public async logout(@Req() request: any) {
+    const sesion = request['user'];
+    const user = await this.authSvc.updateHash(sesion.id, null);
+    return user;
   }
 }
