@@ -1,6 +1,6 @@
 import { Inject, UnauthorizedException, CanActivate, ExecutionContext } from "@nestjs/common";
 import { Request } from "express";
-import { UtilService } from "src/common/services/util.service.js";
+import { UtilService } from "../services/util.service.js";
 import { Injectable } from "@nestjs/common"; 
 
 @Injectable()

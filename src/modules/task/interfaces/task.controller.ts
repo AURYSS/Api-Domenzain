@@ -3,7 +3,7 @@ import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, ParseI
 import { TaskService } from "./task.service.js"; 
 import { CreateTaskDto } from "../dto/create-task.dto.js";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
-import { AuthGuard } from "src/common/guards/auth.guard.js";
+import { AuthGuard } from "../../../common/guards/auth.guard.js";
 
 @ApiTags('Tasks')
 @Controller("api/task")

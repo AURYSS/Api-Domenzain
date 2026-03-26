@@ -3,10 +3,10 @@ import { AuthService } from "./auth.service.js";
 import { ApiOperation } from "@nestjs/swagger";
 import { AuthDto } from "../dto/auth.dto.js";
 import { JwtService } from "@nestjs/jwt";
-import { UtilService } from "src/common/services/util.service.js";
-import { AppException } from "src/common/exceptions/app.exception.js";
+import { UtilService } from "../../../common/services/util.service.js";
+import { AppException } from "../../../common/exceptions/app.exception.js";
 import { request } from "node:http";
-import { AuthGuard } from "src/common/guards/auth.guard.js";
+import { AuthGuard } from "../../../common/guards/auth.guard.js";
 
 
 @Controller("auth")
