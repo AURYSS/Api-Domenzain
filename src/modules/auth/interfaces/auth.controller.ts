@@ -1,14 +1,16 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, UnauthorizedException, UseGuards, Req, Param } from "@nestjs/common";
 import { AuthService } from "./auth.service.js";
-import { ApiOperation } from "@nestjs/swagger";
+import { ApiOperation, ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { AuthDto } from "../dto/auth.dto.js";
+import { RegisterDto } from "../dto/register.dto.js";
 import { JwtService } from "@nestjs/jwt";
 import { UtilService } from "../../../common/services/util.service.js";
 import { AppException } from "../../../common/exceptions/app.exception.js";
 import { request } from "node:http";
 import { AuthGuard } from "../../../common/guards/auth.guard.js";
+import * as bcrypt from 'bcrypt';
 
-
+@ApiTags('Auth')
 @Controller("auth")
 export class AuthController {
 
@@ -17,39 +19,63 @@ export class AuthController {
     private readonly utilSvc: UtilService
   ) {}
 
-@Post("login")
-@HttpCode(HttpStatus.OK)
-@ApiOperation({ summary: "Verifica las credenciales y genera un JWT" })
-public async login(@Body() auth: AuthDto): Promise<any> {
-
-  const user = await this.authSvc.getUserByUsername(auth.username);
-
-  if (user && user.password === auth.password) {
-
-    const payload = {
-      id: user.id,
-      username: user.username,
-    };
-
-
-    //Generar refresh token por 7d 
-    const refresh = await this.utilSvc.generateJWT(payload, '7d');
-    const hashRT = await this.utilSvc.hash(refresh);
-
-    await this.authSvc.updateHash(payload.id, hashRT)
-
-    //Generar token de acceso por 1h
-    const jwt = await this.utilSvc.generateJWT(payload,'1h');
-
+  @Post("register")
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: "Registra un nuevo usuario en la base de datos" })
+  public async register(@Body() registerDto: RegisterDto): Promise<any> {
+    const user = await this.authSvc.register(registerDto);
     return {
-      access_token: jwt,
-      refresh_token: refresh,
+      message: "Usuario registrado con éxito",
+      userId: user.id
     };
-
-  } else {
-    throw new UnauthorizedException('El usuario y/o contrasena es incorrecta');
   }
-}
+
+  @Post("login")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Verifica las credenciales y genera un JWT" })
+  public async login(@Body() auth: AuthDto): Promise<any> {
+
+    const user = await this.authSvc.getUserByUsername(auth.username);
+
+    let isPasswordValid = false;
+    if (user) {
+      if (user.password === auth.password) {
+          isPasswordValid = true;
+      } else {
+          try {
+              isPasswordValid = await bcrypt.compare(auth.password, user.password);
+          } catch (e) {
+              isPasswordValid = false;
+          }
+      }
+    }
+
+    if (user && isPasswordValid) {
+
+      const payload = {
+        id: user.id,
+        username: user.username,
+      };
+
+
+      //Generar refresh token por 7d 
+      const refresh = await this.utilSvc.generateJWT(payload, '7d');
+      const hashRT = await this.utilSvc.hash(refresh);
+
+      await this.authSvc.updateHash(payload.id, hashRT)
+
+      //Generar token de acceso por 1h
+      const jwt = await this.utilSvc.generateJWT(payload,'1h');
+
+      return {
+        access_token: jwt,
+        refresh_token: refresh,
+      };
+
+    } else {
+      throw new UnauthorizedException('El usuario y/o contrasena es incorrecta');
+    }
+  }
 
   @Get("me")
   @UseGuards()
@@ -85,6 +111,7 @@ public async login(@Body() auth: AuthDto): Promise<any> {
   @Post("logout")
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(AuthGuard)
+  @ApiBearerAuth('access-token')
   @ApiOperation({ summary: "Invalida el token actual (simulado)" })
   public async logout(@Req() request: any) {
     const sesion = request['user'];

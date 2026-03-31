@@ -1,65 +1,78 @@
 import { Injectable } from "@nestjs/common";
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Task } from '../entities/task.entity.js';
+import { PrismaService } from '../../../common/services/prisma.service.js';
 import { CreateTaskDto } from "../dto/create-task.dto.js";
+
+// Custom mapper so frontend doesn't break
+function mapPrismaTaskToDto(prismaTask: any) {
+  return {
+    id: prismaTask.id,
+    name: prismaTask.title,
+    description: prismaTask.content || "",
+    priority: prismaTask.published || false,
+    userId: prismaTask.authorId,
+    user: prismaTask.author ? {
+        id: prismaTask.author.id,
+        name: prismaTask.author.name
+    } : undefined
+  };
+}
 
 @Injectable()
 export class TaskService {
-    
-    constructor(
-        @InjectRepository(Task)
-        private taskRepository: Repository<Task>,
-    ) {}
+    constructor(private prisma: PrismaService) {}
 
-    public async getTasks(): Promise<Task[]> {
-        return await this.taskRepository.find({
-            relations: ['user']
+    public async getTasks(userId: number) {
+        const tasks = await this.prisma.task.findMany({
+            where: { authorId: userId },
+            include: { author: true },
+            orderBy: { id: "desc" }
         });
+        return tasks.map(mapPrismaTaskToDto);
     }
 
-    public async getTaskById(id: number): Promise<Task> {
-        const task = await this.taskRepository.findOne({
+    public async getTaskById(id: number) {
+        const task = await this.prisma.task.findUnique({
             where: { id },
-            relations: ['user']
+            include: { author: true }
         });
         if (!task) {
             throw new Error('Task not found');
         }
-        return task;
+        return mapPrismaTaskToDto(task);
     }
 
-    public async createTask(task: CreateTaskDto): Promise<Task> {
-        const newTask = this.taskRepository.create(task);
-        return await this.taskRepository.save(newTask);
+    public async createTask(task: CreateTaskDto) {
+        const newTask = await this.prisma.task.create({
+            data: {
+                title: task.name,
+                content: task.description,
+                published: task.priority || false,
+                authorId: task.userId
+            },
+            include: { author: true }
+        });
+        return mapPrismaTaskToDto(newTask);
     }
 
-    public async updateTask(id: number, task: Partial<CreateTaskDto>): Promise<Task> {
-        const existingTask = await this.taskRepository.findOne({ where: { id } });
-        if (!existingTask) {
-            throw new Error('Task not found');
-        }
-        if (task.name) {
-            existingTask.name = task.name;
-        }
-        if (task.description) {
-            existingTask.description = task.description;
-        }
-        if (task.priority !== undefined) {
-            existingTask.priority = task.priority;
-        }
-        if (task.userId) {
-            existingTask.userId = task.userId;
-        }
-        return await this.taskRepository.save(existingTask);
+    public async updateTask(id: number, task: Partial<CreateTaskDto>) {
+        const updateData: any = {};
+        if (task.name !== undefined) updateData.title = task.name;
+        if (task.description !== undefined) updateData.content = task.description;
+        if (task.priority !== undefined) updateData.published = task.priority;
+        if (task.userId !== undefined) updateData.authorId = task.userId;
+
+        const updated = await this.prisma.task.update({
+            where: { id },
+            data: updateData,
+            include: { author: true }
+        });
+        return mapPrismaTaskToDto(updated);
     }
         
     public async deleteTask(id: number): Promise<boolean> {
-        const sql = 'DELETE FROM task WHERE id = ?';
-        const result = await this.taskRepository.query(sql, [id]);
-
-        return result.changes > 0;  
-        
+        await this.prisma.task.delete({
+            where: { id }
+        });
+        return true;  
     }
-
 }

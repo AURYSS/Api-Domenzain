@@ -13,8 +13,9 @@ model User {
   hash       String?
   lastname   String   @db.VarChar(250)
   password   String
-  username   String   @db.VarChar(100)
+  username   String   @db.VarChar(100) @unique
   taks       Task[]
+  posts      Post[]
 }
 
 model Task {
@@ -22,6 +23,15 @@ model Task {
   title     String
   content   String?
   published Boolean? @default(false)
+  authorId  Int?
+  author    User?    @relation(fields: [authorId], references: [id])
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String?
+  published Boolean  @default(false)
   authorId  Int?
   author    User?    @relation(fields: [authorId], references: [id])
 }

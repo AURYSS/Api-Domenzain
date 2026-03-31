@@ -1,11 +1,12 @@
 
-import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, ParseIntPipe, Post, Put, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, ParseIntPipe, Post, Put, UseGuards, Req } from "@nestjs/common";
 import { TaskService } from "./task.service.js"; 
 import { CreateTaskDto } from "../dto/create-task.dto.js";
-import { ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ApiOperation, ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { AuthGuard } from "../../../common/guards/auth.guard.js";
 
 @ApiTags('Tasks')
+@ApiBearerAuth('access-token')
 @Controller("api/task")
 @UseGuards(AuthGuard)
 export class TaskController {
@@ -13,8 +14,9 @@ export class TaskController {
     constructor(private readonly taskSvc: TaskService){}
 
     @Get()
-    public async getTasks(): Promise<any[]> {
-        return await this.taskSvc.getTasks();
+    public async getTasks(@Req() req: any): Promise<any[]> {
+        const userId = req.user.id;
+        return await this.taskSvc.getTasks(userId);
     }
 
     @Get(":id")
