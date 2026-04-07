@@ -14,8 +14,9 @@ model User {
   lastname   String   @db.VarChar(250)
   password   String
   username   String   @db.VarChar(100) @unique
-  taks       Task[]
+  tasks      Task[]
   posts      Post[]
+  logs       Logs[]
 }
 
 model Task {
@@ -30,8 +31,19 @@ model Task {
 model Post {
   id        Int      @id @default(autoincrement())
   title     String
-  content   String?
   published Boolean  @default(false)
   authorId  Int?
   author    User?    @relation(fields: [authorId], references: [id])
+}
+
+model Logs{
+  id       Int      @id @default(autoincrement())
+  statusCode Int
+  timestamp DateTime
+  path String @db.Text
+  error String @db.Text
+  errorCode String @db.Text
+  session_id Int?
+
+  user User? @relation(fields: [session_id], references: [id])
 }

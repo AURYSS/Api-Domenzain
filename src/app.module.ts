@@ -7,6 +7,9 @@ import { User } from './modules/user/entities/user.entity.js';
 import { Task } from './modules/task/entities/task.entity.js';
 import { PrismaService } from './common/services/prisma.service.js';
 import { PostModule } from './modules/post/post.module.js'; 
+import { LogsModule } from './modules/logs/logs.module.js';
+import { AllExceptionsFilter } from './common/exceptions/http-exception.filter.js';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor.js';
 
 @Controller()
 class AppController {
@@ -30,8 +33,9 @@ class AppController {
     AuthModule,
     TaskModule,
     PostModule,
+    LogsModule,
   ],
   controllers: [AppController],
-  providers: [PrismaService],
+  providers: [PrismaService, AllExceptionsFilter, LoggingInterceptor],
 })
 export class AppModule {}

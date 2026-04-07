@@ -3,6 +3,7 @@ import { AppModule } from './app.module.js';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AllExceptionsFilter } from './common/exceptions/http-exception.filter.js';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -18,7 +19,8 @@ async function bootstrap() {
     skipNullProperties: true, // Permite omitir propiedades nulas 
   }));
 
-  app.useGlobalFilters(new AllExceptionsFilter()); // Aquí puedes agregar tus filtros de excepciones personalizados
+  app.useGlobalFilters(app.get(AllExceptionsFilter)); // Aquí puedes agregar tus filtros de excepciones personalizados
+  app.useGlobalInterceptors(app.get(LoggingInterceptor));
 
   const config = new DocumentBuilder()
     .setTitle('API con vulnerabilidades de Seguridad')
