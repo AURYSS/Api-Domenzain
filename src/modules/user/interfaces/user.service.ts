@@ -15,7 +15,7 @@ export class UserService {
                 role: true,
                 created_at: true,
                 _count: {
-                    select: { taks: true }
+                    select: { tasks: true }
                 }
             }
         });
@@ -27,7 +27,7 @@ export class UserService {
             where: { id },
             include: {
                 _count: {
-                    select: { taks: true }
+                    select: { tasks: true }
                 }
             }
         });
@@ -36,7 +36,7 @@ export class UserService {
             throw new Error("Usuario no encontrado");
         }
 
-        if (user._count.taks > 0) {
+        if (user._count.tasks > 0) {
             throw new ConflictException("No se puede eliminar un usuario con tareas asociadas");
         }
 
