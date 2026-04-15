@@ -14,7 +14,12 @@ model User {
   lastname   String   @db.VarChar(250)
   password   String
   username   String   @db.VarChar(100) @unique
+<<<<<<< HEAD
   tasks      Task[]
+=======
+  role       String   @default("user")
+  taks       Task[]
+>>>>>>> af8207d (fix: Completado de criterios de instrumento 1-Protección de rutas y funcionamineto de guards con Middleware 2-Campo de roles y campo para almacenar el token como hash 3-Uso de un Script Seeding para crear el usuario admin)
   posts      Post[]
   logs       Logs[]
 }

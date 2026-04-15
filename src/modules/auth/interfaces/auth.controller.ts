@@ -55,6 +55,7 @@ export class AuthController {
       const payload = {
         id: user.id,
         username: user.username,
+        role: user.role,
       };
 
 
@@ -85,26 +86,49 @@ export class AuthController {
     return user;
   }
 
-  @Post("refresh/:refresh-token")
+  @Post("refresh")
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Genera un nuevo JWT usando el mismo payload del token actual" })
-  public async refreshToken(@Req() request: any) {
+  @ApiOperation({ summary: "Genera un nuevo JWT usando un Refresh Token válido" })
+  public async refreshToken(@Body('refresh_token') refreshToken: string) {
+    if (!refreshToken) {
+      throw new UnauthorizedException('Refresh token is required');
+    }
 
-    //Obtener el usuario en sesion 
-    const userSession = request['user'];
-    const user = await this.authSvc.getUserById(userSession.id);
+    try {
+      // 1. Verificar el token
+      const payload = await this.utilSvc.getPayload(refreshToken);
+      
+      // 2. Buscar al usuario
+      const user = await this.authSvc.getUserById(payload.id);
+      if (!user || !user.hash) {
+        throw new UnauthorizedException('User not found or session invalidated');
+      }
 
-    if (!user || user.hash) throw new AppException('Acceso denegado', HttpStatus.FORBIDDEN, '0');
+      // 3. Comparar el hash (refresh token)
+      const isMatch = await bcrypt.compare(refreshToken, user.hash);
+      if (!isMatch) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
 
-    console.log(userSession.hash);
-    console.log(user.hash)
-    // TODO: Comprarar el token recibido con el token guardado
-    if (userSession.hash != user.hash) throw new AppException('Acceso denegado', HttpStatus.FORBIDDEN, '0')
+      // 4. Generar nuevos tokens
+      const newPayload = { 
+        id: user.id, 
+        username: user.username,
+        role: user.role,
+      };
+      
+      const newAccessToken = await this.utilSvc.generateJWT(newPayload, '1h');
+      const newRefreshToken = await this.utilSvc.generateJWT(newPayload, '7d');
+      const newHash = await this.utilSvc.hash(newRefreshToken);
 
-    // TODO: Si el token es valido se generan nuevos tokens
-    return{
-      token: '',
-      refreshToken: ''
+      await this.authSvc.updateHash(user.id, newHash);
+
+      return {
+        access_token: newAccessToken,
+        refresh_token: newRefreshToken
+      };
+    } catch (e) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
     }
   }
 
