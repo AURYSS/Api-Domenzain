@@ -1,5 +1,5 @@
 import { Inject, UnauthorizedException, CanActivate, ExecutionContext } from "@nestjs/common";
-import { Request } from "express";
+import type { Request } from "express";
 import { UtilService } from "../services/util.service.js";
 import { Injectable } from "@nestjs/common"; 
 
@@ -27,12 +27,15 @@ export class AuthGuard implements CanActivate {
     }
 
     private extractTokenFromRequest(request: Request): string | null {
+        // Obtenemos el token desde las cookies HttpOnly
+        if (request.cookies && request.cookies['access_token']) {
+            return request.cookies['access_token'];
+        }
+
+        // Fallback al header por si acaso todavía hay algo probando vía Swagger
         const authHeader = request.headers['authorization'];
-        
         if (!authHeader) return null;
-
         const [type, token] = authHeader.split(' ');
-
         return type === 'Bearer' ? token : null;
     }
 }
