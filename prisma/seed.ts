@@ -18,29 +18,34 @@ async function main() {
   // Hashear la contraseña
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  // Upsert: Crea si no existe, actualiza si existe
-  const user = await prisma.user.upsert({
+  // 1. Asegurar que los roles existan
+  await (prisma as any).role.upsert({ where: { name: 'admin' }, update: {}, create: { name: 'admin' } });
+  await (prisma as any).role.upsert({ where: { name: 'user' }, update: {}, create: { name: 'user' } });
+
+  // 2. Upsert del Administrador con relación
+  const user = await (prisma.user as any).upsert({
     where: { username: username },
     update: {
       password: hashedPassword,
-      role: "admin",
       name: "Administrador",
-      lastname: "Sistema"
+      lastname: "Sistema",
+      role: { connect: { name: "admin" } }
     },
     create: {
       username: username,
       password: hashedPassword,
-      role: "admin",
       name: "Administrador",
-      lastname: "Sistema"
+      lastname: "Sistema",
+      role: { connect: { name: "admin" } }
     },
+    include: { role: true }
   });
 
   console.log("✅ Proceso de seeding completado con éxito.");
   console.log("-----------------------------------------");
   console.log(`Usuario: ${user.username}`);
   console.log(`Password: ${password} (Hashed en DB)`);
-  console.log(`Rol: ${user.role}`);
+  console.log(`Rol: ${user.role.name}`);
   console.log("-----------------------------------------");
 }
 

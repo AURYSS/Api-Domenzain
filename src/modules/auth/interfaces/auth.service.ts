@@ -9,15 +9,25 @@ export class AuthService {
 
     constructor(private readonly prisma: PrismaService ) {}
     
-    public async getUserByUsername(username: string): Promise<User | null> {
-        return await this.prisma.user.findFirst({
-            where: { username }
+    /**
+     * Método interno: Obtiene usuario con todos sus datos (incluyendo contraseña)
+     * Solo usar en contextos internos de autenticación
+     */
+    public async getUserByUsername(username: string): Promise<any | null> {
+        return await (this.prisma.user as any).findFirst({
+            where: { username },
+            include: { role: true }
         });
     }
 
-    public async getUserById(id: number): Promise<User | null> {
-        return await this.prisma.user.findFirst({
-            where: { id }
+    /**
+     * Método interno: Obtiene usuario por ID con todos sus datos (incluyendo contraseña)
+     * Solo usar en contextos internos de autenticación
+     */
+    public async getUserById(id: number): Promise<any | null> {
+        return await (this.prisma.user as any).findFirst({
+            where: { id },
+            include: { role: true }
         });
     }
 
