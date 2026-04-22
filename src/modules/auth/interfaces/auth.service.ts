@@ -3,11 +3,15 @@ import { PrismaService } from "../../../common/services/prisma.service.js";
 import { User } from "@prisma/client";
 import { RegisterDto } from "../dto/register.dto.js";
 import * as bcrypt from 'bcrypt';
+import { LogsService } from "../../logs/logs.service.js";
 
 @Injectable()
 export class AuthService {
 
-    constructor(private readonly prisma: PrismaService ) {}
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly logsSvc: LogsService
+    ) {}
     
     /**
      * Método interno: Obtiene usuario con todos sus datos (incluyendo contraseña)

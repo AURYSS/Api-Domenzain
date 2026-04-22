@@ -2,8 +2,11 @@ import { Controller, Get, Delete, Param, UseGuards, HttpCode, HttpStatus, Body, 
 import { UserService } from "./user.service.js";
 import { AdminGuard } from "../../../common/guards/admin.guard.js";
 import { AuthGuard } from "../../../common/guards/auth.guard.js";
-import { ApiOperation, ApiBearerAuth, ApiTags } from "@nestjs/swagger";
+import { ApiOperation, ApiBearerAuth, ApiTags, ApiBody } from "@nestjs/swagger";
 import { UserPublicDto } from "../dto/user-public.dto.js";
+import { CreateUserDto } from "../dto/create-user.dto.js";
+import { UpdateUserDto } from "../dto/update-user.dto.js";
+import { UpdateProfileDto } from "../dto/update-profile.dto.js";
 
 @ApiTags('Users')
 @Controller("user")
@@ -31,7 +34,8 @@ export class UserController {
     @UseGuards(AdminGuard)
     @ApiBearerAuth('access-token')
     @ApiOperation({ summary: "Crea un nuevo usuario (Solo Admin)" })
-    public async createUser(@Body() data: any) {
+    @ApiBody({ type: CreateUserDto })
+    public async createUser(@Body() data: CreateUserDto) {
         return await this.userSvc.createUser(data);
     }
 
@@ -39,7 +43,8 @@ export class UserController {
     @UseGuards(AdminGuard)
     @ApiBearerAuth('access-token')
     @ApiOperation({ summary: "Actualiza un usuario (Solo Admin)" })
-    public async updateUser(@Param("id") id: string, @Body() data: any) {
+    @ApiBody({ type: UpdateUserDto })
+    public async updateUser(@Param("id") id: string, @Body() data: UpdateUserDto) {
         return await this.userSvc.updateUser(Number(id), data);
     }
 
@@ -47,7 +52,8 @@ export class UserController {
     @UseGuards(AuthGuard)
     @ApiBearerAuth('access-token')
     @ApiOperation({ summary: "Actualiza el propio perfil (Protección IDOR)" })
-    public async updateProfile(@Param("id") id: string, @Body() data: any, @Req() req: any) {
+    @ApiBody({ type: UpdateProfileDto })
+    public async updateProfile(@Param("id") id: string, @Body() data: UpdateProfileDto, @Req() req: any) {
         const requesterId = req.user.id;
         return await this.userSvc.updateOwnProfile(Number(id), requesterId, data);
     }

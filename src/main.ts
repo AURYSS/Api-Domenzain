@@ -8,6 +8,7 @@ import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.setGlobalPrefix('api');
 
   app.enableCors({
     origin: ['http://localhost:3000', 'http://localhost:3001', 'http://192.168.1.112:3000'],
@@ -19,7 +20,9 @@ async function bootstrap() {
 
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true, // Elimina propiedades no definidas en los DTOs
-    skipNullProperties: true, // Permite omitir propiedades nulas 
+    forbidNonWhitelisted: true, // Rechaza la petición si hay campos extra (Previene Inyección)
+    transform: true, // Convierte tipos automáticamente (ej: string a number)
+    skipNullProperties: true,
   }));
 
   app.useGlobalFilters(app.get(AllExceptionsFilter));

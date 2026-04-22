@@ -1,11 +1,15 @@
 import { Injectable, UnauthorizedException, ConflictException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../../common/services/prisma.service.js";
 import { UserPublicDto } from "../dto/user-public.dto.js";
+import { LogsService } from "../../logs/logs.service.js";
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
-    constructor(private prisma: PrismaService) {}
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly logsSvc: LogsService
+    ) {}
 
     /**
      * Obtiene lista de usuarios con datos públicos filtrados
@@ -135,6 +139,11 @@ export class UserService {
                 }
             }
         });
+
+        // AUDITORÍA: Registrar cambio de rol
+        if (role && role !== user.role.name) {
+            await this.logsSvc.audit('ROLE_CHANGED', `Admin cambió el rol de ${user.username} de ${user.role.name} a ${role}`, undefined, 300);
+        }
 
         return this.mapToUserPublicDto(updated);
     }
